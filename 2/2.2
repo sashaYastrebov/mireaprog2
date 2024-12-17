@@ -1,0 +1,10 @@
+#аналитически
+u(x)=(cos(x)-x)/(sin(x)+1)
+newton(u, 0.5)
+#дуальные
+p(x)=(cos(x)-x)
+s(x)=-p(x)/(valdiff(p, x)[2])
+newton(s, 0.5)
+#h
+t(x)=-p(x)/((p(x+1e-8)-p(x))/(1e-8))
+newton(t, 0.5)
