@@ -1,0 +1,15 @@
+struct Residue{T,M}
+    value::T
+    Residue{T,M}(val) where{T,M} = new(mod(val, M))
+end
+
+
+Base. +(a::Residue{T,M}, b::Residue{T,M}) where {T,M} = Residue{T,M}(a.value + b.value)
+Base. +(a::Residue{T,M}, b::T) where {T,M} = Residue{T,M}(a.value + b)
+Base. +(a::T, b::Residue{T,M}) where {T,M} = b+a
+Base. -(a::Residue{T,M}, b::Residue{T,M}) where {T,M} = Residue{T,M}(a.value - b.value)
+Base. -(a::Residue{T,M}) where {T,M} = Residue{T,M}(-a.value)
+Base. *(a::Residue{T,M}, b::Residue{T,M}) where {T,M} = Residue{T,M}(a.value * b.value)
+Base. *(a::Residue{T,M}, b::T) where {T,M} = Residue{T,M}(a.value * b)
+Base. *(a::T, b::Residue{T,M}) where {T,M} = b*a
+Base. ^(a::Residue{T,M}, b::T) where {T,M} = Residue{T,M}(a.value^b)
