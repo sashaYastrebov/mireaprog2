@@ -1,0 +1,4 @@
+function root(p::Polynomial{T}, start_value::T, tool) where T
+    v(x)=-(p(x)/((valdiff(p, x, Dual)[1])))
+    newton(v, start_value, tool)
+end
