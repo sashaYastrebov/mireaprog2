@@ -1,0 +1,11 @@
+function exponenta(x::T) where T
+    e=zero(T)
+    a=one(T)
+    k=1
+    while e+a != e
+        e+=a
+        a=x*a/k
+        k+=1
+    end
+    return e
+end
