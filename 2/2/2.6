@@ -1,0 +1,10 @@
+function cosinus(n::Integer, x)
+    cosinus=0.0
+    a=1.0
+    xx=x*x
+    for k in 1:n+1
+        cosinus+=a
+        a=(-1)*a*xx/((2k)*(2k-1))
+    end
+    return cosinus
+end
