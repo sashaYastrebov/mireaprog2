@@ -1,0 +1,92 @@
+function reverse_gauss(A::AbstractMatrix{T}, b::AbstractVector{T}) where T
+    x = similar(b)
+    N = size(A, 1)
+    for k in 0:N-1
+        x[N-k] = (b[N-k] - sumprod(@view(A[N-k,N-k+1:end]),
+        @view(x[N-k+1:end]))) / A[N-k,N-k]
+    end
+    return x
+end
+
+
+@inline function
+sumprod(A::AbstractVector{T},B::AbstractVector{T}) where T
+    s = T(0)
+    @inbounds for i in eachindex(A)
+        s += A[i]*B[i]
+    end
+    return s
+end
+
+function transform_to_steps!(A::AbstractMatrix; epsilon = 1e-7)
+    @inbounds for k ∈ 1:size(A, 1)
+        absval, Δk = findmax(abs, @view(A[k:end,k]))
+        Δk > 1 && swap!(@view(A[k,k:end]), @view(A[k+Δk-1,k:end]))
+        for i ∈ k+1:size(A,1)
+            t = A[i,k]/A[k,k]
+            A[i,k:end] .= @view(A[i,k:end]) .- t .* @view(A[k,k:end])
+        end
+    end
+    return A
+end
+
+function transform_to_steps_colums!(A::AbstractMatrix; epsilon = 1e-7)
+    A=transpose(A)
+    @inbounds for k ∈ 1:size(A, 2)
+        absval, Δk = findmax(abs, @view(A[k, k:end]))
+        Δk > 1 && swap!(@view(A[k:end, k]), @view(A[k:end, k+Δk-1]))
+        for i ∈ k+1:size(A,2)
+            t = A[k, i]/A[k,k]
+            A[k:end, i] .= @view(A[k:end, i]) .- t .* @view(A[k:end, k])
+        end
+    end
+    return transpose(A)
+end
+
+@inline function swap!(A,B)
+    @inbounds for i in eachindex(A)
+        A[i], B[i] = B[i], A[i]
+    end
+end
+
+function Gausse(A::AbstractMatrix{T},b::AbstractVector{T}) where T
+    transform_to_steps!(A)
+    reverse_gauss(A, b)
+end
+function Gausse_colums(A::AbstractMatrix{T},b::AbstractVector{T}) where T
+    transform_to_steps_colums!(A)
+    reverse_gauss(A, b)
+end
+
+function rang(A::AbstractMatrix{T})  where T
+    transform_to_steps!(A)
+    count=0
+    flag=true
+    for i in 1:size(A,1)
+        for j in 1:size(A,2)
+            if A[i, j]!=zero(T)
+                flag=false
+                break
+            end
+        end
+        if flag==true
+            break
+        else
+            count+=1
+            flag=true
+        end
+    end
+    return count
+end
+
+function det(A::AbstractMatrix{T}) where T
+    transform_to_steps!(A)
+    det=one(T)
+    if size(A, 1)!=size(A, 2)
+        return "Неквадратная матрица"
+    end
+    for i in 1:size(A,1)
+        det*=A[i, i]
+    end
+    return det
+end
