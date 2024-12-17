@@ -1,0 +1,16 @@
+function newton(r::Function, x; epsilon = 1e-8, num_max = 10) #1 задача
+    dx = r(x)
+    x += dx 
+    k=1
+    while abs(dx) > epsilon && k < num_max
+        dx = r(x) 
+        x += dx
+        k += 1
+    end
+    abs(dx) > epsilon && @warn("Требуемая точность не достигнута")
+    return x
+end
+
+function Base.abs(x::Vector{T}) where T 
+    return norm(x)
+end
