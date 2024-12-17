@@ -1,0 +1,12 @@
+function cosinus(x)
+    cosinus=1.0
+    a=-x^2/2
+    xx=x*x
+    k=1
+    while cosinus+a != cosinus
+        cosinus+=a
+        a=-a*xx/((2k+2)*(2k+1))
+        k+=1
+    end
+    return cosinus
+end
