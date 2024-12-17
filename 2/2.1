@@ -1,4 +1,4 @@
-function newton(r::Function, x; epsilon = 1e-8, num_max = 10) #1 задача
+function newton(r::Function, x; epsilon = 1e-8, num_max = 10) 
     dx = r(x)
     x += dx 
     k=1
