@@ -1,0 +1,7 @@
+function diaphant_solve(a::T,b::T,c::T) where T
+    nod, u, v=gcdx_(a, b)
+    if nod!=one(T) 
+        return nothing
+    end
+    return u*c, v*c
+end
