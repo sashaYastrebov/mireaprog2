@@ -1,0 +1,142 @@
+ using LinearAlgebra
+struct Polynomial{T}
+    c::Vector{T}
+
+    function Polynomial{T}(c) where T
+        u=1
+        while c[u]==0
+            u+=1
+        end
+        c=c[u:end]
+        new(c)
+    end
+end
+
+(p::Polynomial)(x) = polyval(p,x)
+
+ord(p::Polynomial)=length(p.c)-1
+
+function Base. +(p::Polynomial{T}, g::Polynomial{T}) where T
+    n=length(p.c)
+    m=length(g.c)
+    if m<n
+        r=copy(p.c)
+        r[(n-m+1):end].+=g.c
+    else 
+        r=copy(g.c)
+        r[(m-n+1):end].+=p.c
+    end
+    return Polynomial{T}(r)
+end
+
+Base. +(p::Polynomial{T}, q::T) where T=p+Polynomial{T}([q])
+Base. +(p::T, q::Polynomial{T}) where T=q+p
+
+
+function Base. -(p::Polynomial{T}, g::Polynomial{T}) where T
+    n=length(p.c)
+    m=length(g.c)
+    if m<n
+        r=copy(p.c)
+        r[(n-m+1):end].-=g.c
+    else 
+        r=copy(g.c)
+        r[(m-n+1):end].-=p.c
+    end
+    return Polynomial{T}(r)
+end
+
+function Base. -(p::Polynomial{T}) where T
+    r=p.c
+    r.=-p.c
+    return Polynomial{T}(r)
+end
+Base. -(p::Polynomial{T}, q::T) where T=p+Polynomial{T}([-q])
+Base. -(p::T, q::Polynomial{T}) where T=Polynomial{T}([-p])-q
+
+
+function Base. *(p::Polynomial{T}, g::Polynomial{T}) where T
+    r=zeros(length(p.c)+length(g.c)-1)
+    t=0
+    k=1
+    for i in eachindex(p.c) 
+        for j in eachindex(g.c) 
+            t=i+j
+            k=p.c[i]*g.c[j]
+            r[t-1]=r[t-1]+k
+        end
+    end
+    return Polynomial{T}(r)
+end
+
+
+function Base. *(p::Polynomial{T}, q::T) where T
+    r=p.c
+    r.=p.c*q
+    return Polynomial{T}(r)
+end
+
+function Base.divrem(p::Polynomial{T}, g::Polynomial{T}) where T
+    r=zeros(length(p.c)-length(g.c)+1)
+    if length(p.c)<length(g.c)
+        return p
+    end
+    cc=p.c
+    t=1
+    while length(cc)!=length(g.c)
+        r[t]=cc[1]/g.c[1]
+        cc[begin:length(g.c)].-=g.c*(cc[1]/g.c[1])
+        cc=cc[2:end]
+        t=t+1
+    end
+    r[t]=cc[1]/g.c[1]
+    return Polynomial{T}(r), Polynomial{T}(g.c*(-cc[1]/g.c[1])+cc)
+end
+
+Base. ÷(p::Polynomial{T}, g::Polynomial{T}) where T=divrem(p, g)[1]
+Base. %(p::Polynomial{T}, g::Polynomial{T}) where T=divrem(p, g)[2]
+
+function Base. mod(p::Polynomial{T}, g::NTuple{N, T}) where {T, N}
+    g=collect(g)
+    p%(Polynomial{T}(g))
+end
+
+function polyval(p::Polynomial{T}, g) where T #значение функции в точке
+    r=typeof(g)(0)
+    t=1
+    while t<=length(p.c)
+        r=r*g+p.c[t]
+        t=t+1
+    end
+    return r
+end
+
+function valdiff(p::Polynomial{T}, g::T) where T #производная 
+    dq=0
+    q=0
+    for i in eachindex(p.c)
+        dq=dq+q
+        q=q*g+p.c[i]
+    end
+    return q, dq
+end
+
+function Base. display(p::Polynomial{T}) where T
+    if p.c[1]==1
+        rep="x^$(length(p.c)-1)"
+    else
+        rep=string(p.c[1])*"x^$(length(p.c)-1)"
+    end
+    for i=2:length(p.c)
+        if i==length(p.c)
+            rep=rep*"+"*string(p.c[i])
+        elseif p.c[i]==1
+            rep=rep*"+"*"x^$(length(p.c)-i)"
+        elseif p.c[i]>0
+            rep=rep*"+"*string(p.c[i])*"x^$(length(p.c)-i)"
+        elseif p.c[i]<0
+            rep=rep*"-"*string(p.c[i]*(-1))*"x^$(length(p.c)-i)"
+        end
+    end
+    return rep
+end
