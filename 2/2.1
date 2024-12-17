@@ -11,6 +11,6 @@ function newton(r::Function, x; epsilon = 1e-8, num_max = 10) #1 задача
     return x
 end
 
-function Base.abs(x::Vector{T}) where T 
+function Base.abs(x::Vector{Float64}) where Float64
     return norm(x)
 end
