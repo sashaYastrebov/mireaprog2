@@ -1,0 +1,63 @@
+struct Dual{T} 
+    a::T
+    b::T
+end
+
+Base. +(x::Dual{T}, y::Dual{T}) where T = Dual{T}(x.a+y.a, x.b+y.b)
+Base. +(x::Dual{T}, y::T) where T = Dual{T}(x.a+y, x.b)
+Base. +(x::T, y::Dual{T}) where T =y+x
+
+Base. -(x::Dual{T}) where T = Dual{T}(-x.a, -x.b)
+Base. -(x::Dual{T}, y::Dual{T}) where T = Dual{T}(x.a-y.a, x.b-y.b)
+Base. -(x::Dual{T}, y::T) where T = Dual{T}(x.a-y, x.b)
+Base. -(x::T, y::Dual{T}) where T = y-x
+
+Base. *(x::Dual{T}, y::Dual{T}) where T = Dual{T}(x.a*y.a, x.a*y.b+x.b*y.a)
+Base. *(x::Dual{T}, y::T) where T = Dual{T}(x.a*y, x.b*y)
+Base. *(x::T, y::Dual{T}) where T = y*x
+
+Base. /(x::Dual{T}, y::Dual{T}) where T = Dual{T}(x.a/y.a, (x.b*y.a-x.a*y.b)/(y.a^2))
+Base. /(x::Dual{T}, y::T) where T = Dual{T}(x.a/y, x.b/y)
+Base. /(x::T, y::Dual{T}) where T = Dual{T}(x, 0)/y
+
+Base. ^(x::Dual{T}, n::Integer) where T = Dual{T}(x.a^n, n*x.a^(n-1)*x.b)
+    #r=x
+    #while y!=0
+    #    r*=x
+    #    y-=1
+    #end
+    #return Dual{T}(r) ctan
+
+Base. ^(x::Dual{T}, y::Dual{T}) where T = Dual{T}(x.a^y.a, x.a^y.a*y.b*ln(a)+x.a^(y.a-1)*x.b*y.a)
+Base. ^(x::Dual{T}, y::T) where T = x^Dual{T}(y, 0)
+Base. ^(x::T, y::Dual{T}) where T = Dual{T}(x, 0)^y
+
+Base. sqrt(x::Dual{T}) where T = Dual{T}(x.a^(0.5), (0.5)*x.a^(-0.5)*x.b)
+
+Base.sin(x::Dual{T}) where T = Dual{T}(sin(x.a), x.b*cos(x.a))
+Base.cos(x::Dual{T}) where T = Dual{T}(cos(x.a), -x.b*sin(x.a))
+Base.tan(x::Dual{T}) where T = Dual{T}(tan(x.a), x.b/(cos(x.a))^2)
+#ctan(x::Dual{T}) where T = Dual{T}(ctan(x.a), -x.b/(sin(x.a))^2)
+Base.asin(x::Dual{T}) where T = Dual{T}(asin(x.a), x.b/(sqrt(1-x.a^2)))
+Base.acos(x::Dual{T}) where T = Dual{T}(acos(x.a), -x.b/(sqrt(1-x.a^2)))
+Base.atan(x::Dual{T}) where T = Dual{T}(atan(x.a), x.b/(1+x.a^2))
+#Base.actan(x::Dual{T}) where T = Dual{T}(actan(x.a), -x.b/(1+x.a^2))
+Base.exp(x::Dual{T}) where T = Dual{T}(exp(x.a), x.b*exp(x.a))
+Base.log(x::Dual{T}) where T = Dual{T}(log(x.a), x.b/x.a)
+Base.log2(x::Dual{T}) where T = Dual{T}(log2(x.a), x.b/(log(2)*x.a))
+Base.log10(x::Dual{T}) where T = Dual{T}(log10(x.a), x.b/(log(10)*x.a))
+Base.log(a::AbstractFloat, x::Dual{T}) where T = Dual{T}(log(a, x.a), x.b/(log(a)*x.a))
+
+function valdiff(f::Function, x::T) where T
+    y=f(Dual{T}(x, 1))
+    return y.a, y.b
+end
+
+function valdiff(p::Polynomial{T}, x, ::Type{Dual}) where T
+    t=0
+    for i=1:length(p.c)
+        f(z)=z^(length(p.c)-i)
+        t+=p.c[i]*valdiff(f, x)[2]
+    end
+    return t
+end
