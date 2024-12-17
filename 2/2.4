@@ -1,0 +1,19 @@
+function Iakobi(t::Float64, y::Float64)
+    x=[t, y]
+    f(x)=-inv([2*x[1] 2x[2]; 3*(x[1])^2*x[2] (x[1])^3])*[(x[1])^2+(x[2])^2-2.5; (x[1])^3*x[2]-1]
+    newton(f, x)
+end
+
+f1(x)=x[1]^2+x[2]^2-2.5
+f2(x) = x[1]^3*x[2]-1.0
+
+diff(f::Function, x) = valdiff(f,x)[2]
+x_0=[1.0, 1.0]
+
+newton(x_0) do x
+    f1x₁(x)=diff(x₁->f1([x₁, x[2]]), x[1])
+    f1x₂(x)=diff(x₂->f1([x[1], x₂]), x[2])
+    f2x₁(x)=diff(x₁->f2([x₁, x[2]]), x[1])
+    f2x₂(x)=diff(x₂->f2([x[1], x₂]), x[2])
+    -inv([diff(x₁->f1([x₁, x[2]]), x[1]) diff(x₂->f1([x[1], x₂]), x[2]); diff(x₁->f2([x₁, x[2]]), x[1]) diff(x₂->f2([x[1], x₂]), x[2])])*[x[1]^2+x[2]^2-2; x[1]^3*x[2]-1]
+end
