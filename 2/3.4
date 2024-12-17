@@ -1,0 +1,7 @@
+function invmod(a::Residue{T,M}) where {T,M}
+    nod, u, v=gcdx_(a, M)
+    if nod!=one(T) 
+        return nothing
+    end
+    return u #нам нужен коэффицент перед первым слагаемым
+end
