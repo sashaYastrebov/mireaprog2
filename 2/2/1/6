@@ -1,0 +1,383 @@
+function sorte!(a) #18.7 1 задача
+    n = length(a)
+    for k in 1:n-1
+        istranspose = false
+        for i in 1:n-k
+            if a[i] > a[i+1]
+                a[i], a[i+1] = a[i+1], a[i]
+                istranspose = true
+            end
+        end
+        if istranspose == false
+            break
+        end
+    end
+    return a
+end
+
+function perm!(a)
+    b=sort(a)
+    n = length(a)
+    c=zeros(Int64, n)
+    for i in 1:n
+        c[i]=findfirst(==(b[i]), a)
+    end
+    a=c
+    return a
+end
+
+function insert_sort!(vector)#6.1
+    n = 1
+    # ИНВАРИАНТ: срез vector[1:n] - отсортирован
+    while n < length(vector)
+        n += 1
+        i = n
+        while i > 1 && vector[i-1] > vector[i]
+            vector[i], vector[i-1] = vector[i-1], vector[i]
+            i -= 1
+        end
+    #УТВ: vector[1]<.< vector[n]
+    end
+    return vector
+end
+
+function shell_sort!(a::AbstractVector) #0.05
+    n=length(a)
+    step_series = (n÷2^i for i in 1:Int(floor(log2(n))))
+    # при n=1000: 500, 250, 125, 62,31, 15, 7, 3, 1
+    for step in step_series
+        for i in firstindex(a):lastindex(a)-step
+        # - тут записано без привязки к способу индексации массива
+        # (имеется ввиду индексация c 0, или с 1, или ещё как)
+            j = i
+            while j >=firstindex(a) && a[j] > a[j+step]
+                a[j], a[j+step] = a[j+step], a[j]
+                j -= step
+            end
+        end
+    end
+    return a
+end
+
+@inline
+function Base.merge!(a1, a2, a3)::Nothing
+    i1, i2, i3 = 1, 1, 1
+     # - передотвращает проверки выхода за пределы массивов
+    @inbounds while i1 <= length(a1) && i2 <= length(a2)
+        if a1[i1] < a2[i2]
+            a3[i3] = a1[i1]
+            i1 += 1
+        else
+            a3[i3] = a2[i2]
+            i2 += 1
+        end
+        i3 += 1
+    end
+    
+    @inbounds if i1 > length(a1)
+        a3[i3:end] .= @view(a2[i2:end])
+# ! тут перед = точка должна должна быть внизу
+# Если бы было без точки, то это привело бы к лишним
+# аллокациям (к созданию промежуточного массива)
+    else
+        a3[i3:end] .= @view(a1[i1:end])
+    end
+    nothing
+end
+
+function merge_sort!(a)#0.03 #слияния
+    b = similar(a) # - вспомогательный массив того же размера и типа, что и массив a
+    N = length(a)
+    n = 1 # n - текущая длина блоков
+    @inbounds while n < N
+        K = div(N,2n) # - число имеющихся пар блоков длины n
+        for k in 0:K-1
+            merge!(@view(a[(1:n).+k*2n]),
+            @view(a[(n+1:2n).+k*2n]), @view(b[(1:2n).+k*2n]))
+        end
+        if N - K*2n > n
+    # - осталось еще смержить блок длины n и более короткий
+    # остаток
+            merge!(@view(a[(1:n).+K*2n]),
+            @view(a[K*2n+n+1:end]), @view(b[K*2n+1:end]))
+        elseif 0 < N - K*2n <= n
+    # - оставшуюся короткую часть мержить уже не с чем
+            b[K*2n+1:end] .= @view(a[K*2n+1:end])
+        end
+        a, b = b, a
+        n *= 2
+    end
+    # - если цикл был выполнен нечетное число раз, то b - это
+    # исходная ссылка на массив (на внешний массив), и a - этоссылка
+    # на вспомогательный массив (локальный)
+    if isodd(log2(n))
+        b .= a # тут перед = точка должна быть внизу
+        a = b
+    end
+    return a
+end
+
+sorte(vector) =sorte!(copy(vector))
+sorte(vector::AbstractVector) = sorte!(deepcopy(vector))
+perm(vector) =perm!(copy(vector))
+perm(vector::AbstractVector) = perm!(deepcopy(vector))
+
+function issort(a)
+    if a==sort(a)
+        return true
+    end 
+    return false
+end
+
+function comb_sort!(a::AbstractVector; factor=1.2473309) #0.05 #расчёской
+    step = length(a)
+    while step > 1
+        for i in 1:length(a)-step
+            if a[i] > a[i+step]
+                a[i], a[i+step] = a[i+step], a[i]
+            end
+        end
+        step = Int(floor(step/factor))
+    end
+    # Теперь массив почти упорядочен, осталось сделать всего
+    # несколько итераций внешнего цикла в bubble_sort!(a)
+    sort!(a)
+end
+
+function part_sort!(A, b) 
+    N = length(A)
+    K=0; L=0; M=N
+    #ИНВАРИАНТ: A[1:K] < b & A[K+1:L] = b & A[M+1:N] > b
+    while L < M
+        if A[L+1] == b
+            L += 1
+        elseif A[L+1] > b
+            A[L+1], A[M] = A[M], A[L+1]
+            M -= 1
+        else # if A[L+1] < b
+            L += 1; K += 1
+            A[L], A[K] = A[K], A[L]
+        end
+    end
+    return K, M+1
+end
+
+function quick_sort!(A)#0.02 
+    if isempty(A)
+        return A
+    end
+    N = length(A)
+    K, M = part_sort!(A, A[rand(1:N)])
+    # - "базовый" элемент массива выбирается случайнам образом
+    quick_sort!(@view(A[1:K]))
+    quick_sort!(@view(A[M:N]))
+    return A
+end
+
+function median_H(A)
+    A=quick_sort!(A)
+    N=length(A)
+    if N%2==1
+        return A[(N-1)÷2]
+    else
+        return (A[N÷2-1]+A[N÷2+1])÷2
+    end
+end
+
+function heap!(array)
+    N = length(array)
+    for i in 1:N÷2
+        if array[i] < array[2i]
+            array[i], array[2i] = array[2i], array[i]
+        end
+        if 2i+1 <= N & array[i] < array[2i+1]
+            array[i], array[2i+1] = array[2i+1], array[i]
+        end
+    end
+    return array
+end
+
+function down_first!(heap::AbstractVector)::Nothing
+    index = 1
+    N = length(heap)
+    while index < N÷2
+        if heap[index] < heap[2index]
+            heap[index], heap[2index] = heap[2index], heap[index]
+        end
+        if 2index+1 <= N & heap[index] < heap[2index+1]
+    # порядок аргуметов лоической связки & здесь важен!
+            heap[index], heap[2index+1] = heap[2index+1],
+            heap[index]
+        end
+        index *= 2
+    end
+end
+
+function heap_sort!(heap::AbstractVector)#0.005
+    heap = heap!(heap)
+    N = length(heap)
+    # ИНВАРИАНТ: heap[1:N] - это максимальная куча &
+    heap[N+1:end] 
+    # это отсортированная часть массива
+    while N > 3
+        heap[1], heap[N] = heap[N], heap[1]
+        N -= 1
+        down_first!(@view(heap[1:N]))
+    end
+    return heap
+end
+
+function calc_sort!(A::AbstractVector{<:Integer})
+    min_val, max_val = extrema(A)
+    num_val = zeros(Int, max_val-min_val+1)
+    # num_val - число всех возможных значений элементов массива
+    for val in A
+        num_val[val-min_val+1] += 1
+    end
+    k = 0
+    for (i, num) in enumerate(num_val)
+        A[k+1:k+num] .= min_val+i-1
+        k += num
+    end
+    return A
+end
+
+
+
+function bin_search(A, n)
+    end_element=length(A)
+    start_element=1
+    while start_element<=end_element
+        middle_element=start_element+(end_element - start_element)÷2
+        if A[middle_element] == n
+            return middle_element
+        elseif A[middle_element] < n
+            start_element = middle_element + 1
+        else
+            end_element = middle_element - 1
+        end
+    end
+    return -1
+end
+
+function sort_1(A::Matrix{T}) where T
+    x=[collect(column) for column in eachcol(A)]
+    
+    #x = Vector{Float64}()
+    rows, cols = size(A)
+    #for j = 1:cols
+    #    k = 0
+    #    for  i = 1:rows
+    #        k += A[i, j]^2
+    #    end
+    #    append!(x, sqrt(k/rows)) 
+    #end
+    B=Matrix{T}(undef, rows, cols)
+    for j = 1:cols
+        for i=1:rows
+            B[i, sortperm(x)[j]]=A[i, j]
+        end
+    end
+    return B
+end
+
+
+
+function sort_2(A::Matrix{T}) where T
+    vectors = [Vector(column) for column in eachcol(A)]
+    vectors=sort!(vectors, by=Mean_tw)
+    return hcat(vectors...)
+end
+
+function Mean_tw(vectors::Vector{T}) where T
+    vector=sqrt(sum(vectors))/length(vectors)
+    return vector
+end
+
+
+
+struct Vector_2D{T<:Real}
+    #<: FieldVector{2, T}
+    x::T
+    y::T
+end
+
+
+Vector2D{T<:Real} = NamedTuple{(:x, :y), Tuple{T,T}}
+Base. +(a::Vector2D{T},b::Vector2D{T}) where T = Vector2D{T}(Tuple(a) .+ Tuple(b))
+Base. -(a::Vector2D{T}, b::Vector2D{T}) where T =Vector2D{T}(Tuple(a) .- Tuple(b))
+Base. *(α::T, a::Vector2D{T}) where T = Vector2D{T}(α.*Tuple(a))
+LinearAlgebra.norm(a::Vector2D) = norm(Tuple(a))
+# norm(a) - длина вектора, эта функция опредедена в LinearAlgebra
+LinearAlgebra.dot(a::Vector2D{T}, b::Vector2D{T}) where T =dot(Tuple(a), Tuple(b))
+# dot(a,b)=|a| b|cos(a,b) - скалярное произведение, эта функция определена в LinearAlgebra
+Base. cos(a::Vector2D{T}, b::Vector2D{T}) where T =dot(a,b)/norm(a)/norm(b)
+xdot(a::Vector2D{T}, b::Vector2D{T}) where T = a.x*b.y-a.y*b.x
+# xdot(a,b)=|a| b|sin(a,b) - косое произведение
+Base.sin(a::Vector2D{T}, b::Vector2D{T}) where T = xdot(a,b)/norm(a)/norm(b)
+Base.angle(a::Vector2D{T}, b::Vector2D{T}) where T = atan(sin(a,b),cos(a,b))
+Base.sign(a::Vector2D{T}, b::Vector2D{T}) where T =sign(sin(a,b))
+
+Segment2D{T<:Real} = NamedTuple{(:A, :B),NTuple{2,Vector2D{T}}}
+#s = Segment2D{Int}((Vector2D{Int}((0,0)), Vector2D{Int}((1,2))))
+
+function is_one(P::Vector2D{T}, Q::Vector2D{T}, s::Segment2D{T}) where T
+    l = s.B-s.A
+    return sin(l, P-s.A)*sin(l, Q-s.A)>0
+end
+
+is_one_area(F::Function, P::Vector2D{T}, Q::Vector2D{T}) where T = (F(P...)*F(Q...)>0)
+
+function is_covex(vectors::Vector{Vector2D{T}}) where T
+    lenn=length(vectors)
+    for i=1:lenn-2
+        vec1=vectors[i]-vectors[i+1]
+        vec2=vectors[i+2]-vectors[i+1]
+        if sign(vec1, vec2)<=0
+            return false
+        end
+    end
+    vec1=vectors[1]-vectors[lenn]
+    vec2=vectors[lenn]-vectors[lenn-1]
+    vec3=vectors[1]-vectors[2]
+    if sign(vec1, vec2)<=0 || sign(vec1, vec3)<=0
+        return false
+    end 
+    return true
+end
+
+function is_on_figure(vectors::Vector{Vector2D{T}}, a::Vector2D{T}) where T
+    summ=0
+    len=length(vectors)
+    for i=1:len-1
+        vec1=vectors[i]-a
+        vec2=vectors[i+1]-a
+        summ-=angle(vec1, vec2)
+    end
+    vec1=vectors[len]-a
+    vec2=vectors[1]-a
+    summ-=angle(vec1, vec2)
+    if summ>pi
+        return true
+    else
+        return summ
+    end
+end
+
+
+# function Jarvis(Vectors{Vector2D{T}}) where T
+#     len=length(Vectors)
+#     l=Vector2D{T}(0, 1)
+#     p0=min(Vectors)
+#     p=p0
+#     A=[]
+#     while l!=p0-p
+#         for i=1:len
+#             if p!=Vectors[i]
+#                 vec=Vectors[i]-p
+#                 A.push!(angle(l, vec))
+#             end
+#         end
+        
+#     end
+# end
